@@ -3,7 +3,7 @@ from classes import Node, Pair
 import heapq
 
 
-# return the best rates we can find for swapping token to all other tokens accross all exchanges
+# return the best rates we can find for swapping {{token}} to all other tokens accross all exchanges
 def getBestSwaps(token, exchanges):
     res = {}
     for exchange in exchanges:
@@ -17,7 +17,7 @@ def getBestSwaps(token, exchanges):
     return res
 
 
-# returns the best rate we can find for swapping token for targetToken
+# returns the best rate we can find for swapping {{toke}} for {{targetToken}}
 def getBestSwap(token, targetToken, exchanges):
     res = None
     for exchange in exchanges:
@@ -50,12 +50,12 @@ def printResult(paths, tokenA, tokenB):
 def swapRoute(tokenA, tokenB, amount, exchanges):
     if (amount <= 0):
         return 0
-    paths = {}
+    paths = {}  # map of token -> Node
 
     depth_one_tokens = []
     depth_two_tokens = set()
     bestSwaps = getBestSwaps(token=tokenA, exchanges=exchanges)
-    # first, let's initialize the maximum quantity of any token we can swap for tokenA
+    # first, let's initialize the maximum quantity of any token we can swap for tokenA, and store them ordered by quantity
     for neighbourToken in bestSwaps:
         if (bestSwaps[neighbourToken].rate == 0):
             continue
@@ -74,8 +74,6 @@ def swapRoute(tokenA, tokenB, amount, exchanges):
         curNode = paths[token]
         bestSwaps = getBestSwaps(token=token, exchanges=exchanges)
         for neighbourToken in bestSwaps:
-            if (neighbourToken in depth_two_tokens):
-                continue
             rate = bestSwaps[neighbourToken].rate
             if (neighbourToken == tokenA or rate == 0):
                 continue
@@ -108,7 +106,7 @@ def swapRoute(tokenA, tokenB, amount, exchanges):
             paths[tokenB].update(amount=tempMaximumQuantity,
                                  previous=token, exchangeName=bestSwap.exchangeName)
     if (tokenB not in paths):
-        print("Not possible.")
+        print("Not possible to swap to " + tokenB + " from " + tokenA)
         return 0
     printResult(paths, tokenA, tokenB)
     return paths[tokenB].amount
@@ -122,13 +120,18 @@ def test(tokenA, tokenB, amount, exchanges, expectedTotal):
         print("Fail")
 
 
+# happy-path tests
 test(SOL, USDC, 100, [ORANGE, RED, GREEN], 495)
 test(SOL, ETH, 100, [ORANGE, RED], 330)
 test(JUP, USDC, 100, [RED], 562)
+# Check case where X -> Y is superior to X -> X1 -> X2 -> Y
 test(SOL, JUP, 100, [ONE_OPTIMAL_SKIP, RED, GREEN], 10000)
+# Check case where we cannot swap at all
 test(SOL, ETH, 100, [ZEROES], 0)
-test(SOL, ETH, 100, [ONE_OPTIMAL_SKIP, GREEN], 20750)  # !!
+test(SOL, ETH, 100, [ONE_OPTIMAL_SKIP, GREEN], 20750)
+# Input is invalid
 test(SOL, ETH, -1, [RED], 0)
 test(SOL, ETH, 0, [GREEN], 0)
+# Path exists, but takes more than 3 skips
 test(SOL, USDT, 100, [FOUR_SKIPS_A, FOUR_SKIPS_B,
      FOUR_SKIPS_C, FOUR_SKIPS_D], 0)
